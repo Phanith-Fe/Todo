@@ -6,16 +6,110 @@
     android:layout_height="match_parent"
     tools:context="com.phanith.todo.Controller.LoginActivity">
 
-    <com.google.android.gms.common.SignInButton
-        android:id="@+id/sign_in_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <!--<com.google.android.gms.common.SignInButton-->
+    <!--android:id="@+id/sign_in_button"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_above="@+id/linearLayout2"-->
+    <!--android:layout_alignParentStart="true"-->
+    <!--android:layout_marginBottom="37dp" />-->
 
-    <com.facebook.login.widget.LoginButton
-        android:layout_width="wrap_content"
+    <!--<com.facebook.login.widget.LoginButton-->
+    <!--android:id="@+id/facebook_login"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginStart="12dp" />-->
+
+
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/facebook_login"
-        android:layout_centerInParent="true" />
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:padding="50px">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/text_login"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="#303F9F"
+            android:layout_marginTop="100dp"
+            android:layout_marginBottom="50dp"/>
+
+
+        <android.support.v7.widget.CardView
+            android:id="@+id/sign_in_button"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="#DC4E41"
+            android:orientation="horizontal"
+            app:cardCornerRadius="5dp">
+
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="5dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="5dp"
+                android:layout_marginTop="5dp"
+                android:src="@drawable/google_plus" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="65dp"
+                android:paddingTop="7dp"
+                android:text="@string/str_google_login"
+                android:textAlignment="center"
+                android:textColor="@android:color/white"
+                android:textSize="24sp"
+                android:textStyle="bold" />
+        </android.support.v7.widget.CardView>
+
+        <android.support.v7.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="#3B5998"
+            android:orientation="horizontal"
+            app:cardCornerRadius="5dp"
+            android:id="@+id/fb_btn">
+            <FrameLayout
+                android:id="@+id/FrameLayout1"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <com.facebook.login.widget.LoginButton
+                    android:id="@+id/facebook_login"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:layout_width="50dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginBottom="5dp"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="5dp"
+                    android:layout_marginTop="5dp"
+                    android:src="@drawable/facebook" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginLeft="65dp"
+                    android:paddingTop="7dp"
+                    android:text="@string/str_fb_login"
+                    android:textAlignment="center"
+                    android:textColor="@android:color/white"
+                    android:textSize="24sp"
+                    android:textStyle="bold"/>
+            </FrameLayout>
+        </android.support.v7.widget.CardView>
+
+    </LinearLayout>
 
 
 </RelativeLayout>

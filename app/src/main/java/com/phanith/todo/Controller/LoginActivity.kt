@@ -4,8 +4,10 @@ import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.annotation.NonNull
+import android.support.v7.widget.CardView
 import android.util.Log
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.Toast
 import com.facebook.*
 import com.facebook.login.widget.LoginButton
@@ -29,6 +31,7 @@ import com.phanith.todo.Model.FirebaseTree
 import com.phanith.todo.Model.KeyID
 import org.json.JSONObject
 import java.security.Key
+import java.text.SimpleDateFormat
 import kotlin.collections.HashMap
 
 
@@ -122,6 +125,11 @@ private fun LoginActivity.setupFacebookLogin(){
     FacebookSdk.sdkInitialize(applicationContext)
     callbackManager = CallbackManager.Factory.create()
     val loginButton: LoginButton = findViewById(R.id.facebook_login)
+    val fbLoginBtn = findViewById<CardView>(R.id.fb_btn)
+    fbLoginBtn.setOnClickListener {
+        loginButton.performClick()
+    }
+
     loginButton.setReadPermissions("email", "public_profile")
     loginButton.registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
 
@@ -144,7 +152,7 @@ private fun LoginActivity.setupFacebookLogin(){
                         currentUser.profileImageUrl = `object`.getJSONObject("picture").getJSONObject("data").getString("url")
                     }
 
-                    currentUser.active = "Should be in SharedPreference"
+                    currentUser.active = getCurrentDate()
                     currentUser.language = "Should be in SharedPreference"
 
                     val credential = FacebookAuthProvider.getCredential(loginResult.accessToken.token)
@@ -161,6 +169,13 @@ private fun LoginActivity.setupFacebookLogin(){
 
 //            val credential = FacebookAuthProvider.getCredential(loginResult.accessToken.token)
 //            firebaseLogin(credential)
+        }
+
+        private fun getCurrentDate(): String {
+            val calendar: Calendar = Calendar.getInstance()
+            val dateFormat = SimpleDateFormat("MMMM dd, yyyy")
+
+            return dateFormat.format(calendar.getTime()).toString();
         }
 
         override fun onCancel() {
@@ -185,8 +200,9 @@ private fun LoginActivity.setupGoogleLogin(){
             .build()
 
     val mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
-    val signInButton = findViewById<SignInButton>(R.id.sign_in_button)
-    signInButton.setSize(SignInButton.SIZE_STANDARD)
+//    val signInButton = findViewById<SignInButton>(R.id.sign_in_button)
+//    signInButton.setSize(SignInButton.SIZE_STANDARD)
+    val signInButton = findViewById<CardView>(R.id.sign_in_button)
 
     signInButton.setOnClickListener {
         val signInIntent = mGoogleSignInClient.signInIntent

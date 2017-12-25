@@ -1,5 +1,13 @@
 <resources>
     <string name="app_name">Todo</string>
-    <string name="facebook_app_id">1924457957815404</string>
-    <string name="fb_login_protocol_scheme">fb1924457957815404</string>
+    <string name="log_out_social">Log out</string>
+    <string name="facebook_app_id" translatable="false">1924457957815404</string>
+    <string name="fb_login_protocol_scheme" translatable="false">fb1924457957815404</string>
+    <string name="str_email">Email</string>
+    <string name="last_active">Active</string>
+    <string name="task_title">Title</string>
+    <string name="task_description">Description</string>
+    <string name="str_google_login">Login with Google</string>
+    <string name="str_fb_login">Login with Facebook</string>
+    <string name="text_login">Connect App to Social</string>
 </resources>

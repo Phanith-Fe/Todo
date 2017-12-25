@@ -2,6 +2,7 @@ package com.phanith.todo.Controller
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import com.phanith.todo.R
@@ -25,6 +26,7 @@ import android.provider.Contacts.People
 import android.text.method.TextKeyListener.clear
 import android.widget.*
 import org.json.JSONObject
+import java.util.*
 
 val USER_PROFILE: String = "USER_PROFILE"
 val USER_PROFILE_IMAGE_URL: String = "URL"
@@ -62,11 +64,11 @@ class ProfileActivity : AppCompatActivity() {
         editor.apply()
     }
 
-    private fun instanceCurrentUser(){
+    private fun instanceCurrentUser() {
         currentUser = User()
     }
 
-    private fun instanceProfile(){
+    private fun instanceProfile() {
         username = findViewById(R.id.name)
         username.text = currentUser.name
 
@@ -80,10 +82,10 @@ class ProfileActivity : AppCompatActivity() {
         email.text = currentUser.email
     }
 
-    private fun trackUserDataChanges(){
+    private fun trackUserDataChanges() {
 
         mDatabase = FirebaseDatabase.getInstance().reference.child(FirebaseTree.Users.toString()).child(FirebaseAuth.getInstance().uid)
-        listener = object: ValueEventListener {
+        listener = object : ValueEventListener {
 
             override fun onDataChange(p0: DataSnapshot?) {
 
@@ -140,12 +142,26 @@ class ProfileActivity : AppCompatActivity() {
 
         khmer.isChecked = !english.isChecked
 
-        english.setOnCheckedChangeListener { _ , isChecked ->
+        english.setOnCheckedChangeListener { _, isChecked ->
             englishChecked(isChecked)
+            val locale = Locale("en_US")
+            Locale.setDefault(locale)
+//            val config = Configuration()
+//            config.locale = locale
+//
+            this.resources.configuration.setLocale(locale)
+
         }
 
-        khmer.setOnCheckedChangeListener { _ , isChecked ->
+        khmer.setOnCheckedChangeListener { _, isChecked ->
             khmerChecked(isChecked)
+            val locale = Locale("km_rKH")
+            Locale.setDefault(locale)
+//            val config = Configuration()
+//            config.locale = locale
+//            this.getResources().updateConfiguration(config, this.getResources().getDisplayMetrics());
+            this.resources.configuration.setLocale(locale)
+
         }
     }
 }

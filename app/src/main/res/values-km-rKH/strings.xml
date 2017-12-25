@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">កិច្ចការ</string>
+    <string name="log_out_social">ចាកចេញ</string>
+    <string name="str_email">អ៊ីម៉ែល</string>
+    <string name="last_active">ដំណើរការចុងក្រោយ</string>
+    <string name="task_title">ចំណងជើង</string>
+    <string name="task_description">អធិប្បាយ</string>
+    <string name="str_google_login">ចូលតាម ហ្គូហ្គល</string>
+    <string name="str_fb_login">ចូលតាម ហ្វេសប៊ុក</string>
+    <string name="text_login">ភ្ជាប់ជាមួយ​បណ្តាញសង្គម</string>
+</resources>

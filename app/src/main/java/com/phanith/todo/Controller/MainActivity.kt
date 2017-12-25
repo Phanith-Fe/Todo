@@ -8,15 +8,25 @@ import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.StaggeredGridLayoutManager
 import android.util.Log
 import android.widget.Toast
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import com.phanith.todo.Adapter.TodoAdapter
 import com.phanith.todo.Datasource.Datasource
+import com.phanith.todo.Model.FirebaseTree
+import com.phanith.todo.Model.KeyID
 import com.phanith.todo.Model.TodoModel
 import com.phanith.todo.R
 import com.squareup.picasso.Picasso
 import de.hdodenhof.circleimageview.CircleImageView
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
+
+    lateinit var mDatabase: FirebaseDatabase
+    lateinit var mAuth: FirebaseAuth
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +57,20 @@ class MainActivity : AppCompatActivity() {
 
         recyclerView.adapter = TodoAdapter(todos)
 
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        val uid: String = FirebaseAuth.getInstance().currentUser!!.uid
+        FirebaseDatabase.getInstance().reference.child(FirebaseTree.Users.toString()).child(uid).child(KeyID.Active.toString()).setValue(getCurrentDate())
+
+    }
+    private fun getCurrentDate(): String {
+        val calendar: Calendar = Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("dd-MM-yyyy")
+
+        return dateFormat.format(calendar.getTime()).toString();
     }
 }
 
