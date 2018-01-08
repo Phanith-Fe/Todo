@@ -1,5 +1,6 @@
 package com.phanith.todo.Controller
 
+import android.content.Context
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -42,13 +43,20 @@ class LoginActivity : AppCompatActivity() {
     lateinit var callbackManager: CallbackManager
     lateinit var mDatabase: DatabaseReference
     lateinit var currentUser: User
-
     var isInitialized: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
+        initialize()
+        setupFirebaseLogin()
+        setupGoogleLogin()
+        setupFacebookLogin()
+        instanceCurrentUserData()
+    }
+
+    private fun initialize(){
         try{
             if(!isInitialized){
                 FirebaseDatabase.getInstance().setPersistenceEnabled(true);
@@ -59,14 +67,110 @@ class LoginActivity : AppCompatActivity() {
         }catch (e: Exception){
             e.printStackTrace()
         }
-
         mDatabase = FirebaseDatabase.getInstance().reference
-
-        setupFirebaseLogin()
-        setupGoogleLogin()
-        setupFacebookLogin()
-        instanceCurrentUserData()
     }
+
+    //MARK: Setup Firebase login
+    private fun setupFirebaseLogin(){
+        mAuth = FirebaseAuth.getInstance()
+        val currentUser = mAuth.currentUser
+        if (currentUser != null) {
+            getMainActivity(currentUser)
+        }
+    }
+
+    //MARK: Setup Google login
+    private fun setupGoogleLogin(){
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .build()
+
+        val mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
+        val signInButton = findViewById<CardView>(R.id.sign_in_button)
+
+        signInButton.setOnClickListener {
+            val signInIntent = mGoogleSignInClient.signInIntent
+            startActivityForResult(signInIntent, SIGN_IN_ID)
+        }
+    }
+
+    //MARK: Setup Facebook Login
+    private fun setupFacebookLogin(){
+
+        FacebookSdk.sdkInitialize(applicationContext)
+        callbackManager = CallbackManager.Factory.create()
+        val loginButton: LoginButton = findViewById(R.id.facebook_login)
+        val fbLoginBtn = findViewById<CardView>(R.id.fb_btn)
+        fbLoginBtn.setOnClickListener {
+            loginButton.performClick()
+        }
+
+        loginButton.setReadPermissions("email", "public_profile")
+        loginButton.registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
+
+            override fun onSuccess(loginResult: LoginResult) {
+
+                val accessToken = AccessToken.getCurrentAccessToken()
+                val request = GraphRequest.newMeRequest(accessToken) { `object`, response ->
+
+                    try {
+
+                        if (`object`.has("name")) {
+                            currentUser.name = `object`.getString("name")
+                        }
+
+                        if (`object`.has("email")) {
+                            currentUser.email = `object`.getString("email")
+                        }
+
+                        if (`object`.has("picture")) {
+                            currentUser.profileImageUrl = `object`.getJSONObject("picture").getJSONObject("data").getString("url")
+                        }
+
+                        currentUser.active = getCurrentDate()
+                        currentUser.language = "Should be in SharedPreference"
+
+                        val preference = getSharedPreferences(USER_PROFILE, Context.MODE_PRIVATE)
+                        val editor = preference.edit()
+                        editor.putString(USER_PROFILE_IMAGE_URL, currentUser.profileImageUrl)
+                        editor.apply()
+
+                        val credential = FacebookAuthProvider.getCredential(loginResult.accessToken.token)
+
+                        firebaseLogin(credential)
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                val parameters = Bundle()
+                parameters.putString("fields", "id,name,link,email,picture,gender, birthday")
+                request.parameters = parameters
+                request.executeAsync()
+            }
+
+            override fun onCancel() {
+
+            }
+
+            override fun onError(exception: FacebookException) {
+
+            }
+        })
+    }
+
+    //MARK: Instance current user
+    private fun instanceCurrentUserData(){
+        currentUser = User()
+        currentUser.name = ""
+        currentUser.language = ""
+        currentUser.active = ""
+        currentUser.email = ""
+        currentUser.uid = ""
+        currentUser.profileImageUrl = ""
+    }
+
 
     public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
         callbackManager.onActivityResult(requestCode, resultCode, data)
@@ -83,6 +187,11 @@ class LoginActivity : AppCompatActivity() {
                 currentUser.active = "Should be in SharedPreference"
                 currentUser.language = "Should be in SharedPreference"
 
+                val preference = getSharedPreferences(USER_PROFILE, Context.MODE_PRIVATE)
+                val editor = preference.edit()
+                editor.putString(USER_PROFILE_IMAGE_URL, currentUser.profileImageUrl)
+                editor.apply()
+
                 val credential = GoogleAuthProvider.getCredential(account.idToken, null)
                 firebaseLogin(credential)
             } catch (e: ApiException) {
@@ -90,157 +199,55 @@ class LoginActivity : AppCompatActivity() {
             }
         }
     }
-}
 
-private fun LoginActivity.instanceCurrentUserData(){
-    currentUser = User()
-
-    currentUser.name = ""
-    currentUser.language = ""
-    currentUser.active = ""
-    currentUser.email = ""
-    currentUser.uid = ""
-    currentUser.profileImageUrl = ""
-}
-
-private fun LoginActivity.pushUserData(_user: User) {
-
-    mDatabase = FirebaseDatabase.getInstance().reference
-    var childUpdates: HashMap<String, Any> = HashMap()
-
-    childUpdates.put(KeyID.Username.toString(), _user.name)
-    childUpdates.put(KeyID.Email.toString(), _user.email)
-    childUpdates.put(KeyID.Active.toString(), _user.active)
-    childUpdates.put(KeyID.Language.toString(), _user.language)
-    childUpdates.put(KeyID.ProfileImageUrl.toString(), _user.profileImageUrl)
-    _user.uid?.let { childUpdates.put(KeyID.Uid.toString(), it) }
-
-    mDatabase.child(FirebaseTree.Users.toString()).child(_user.uid).updateChildren(childUpdates)
-
-}
-
-// Setup Facebook Login
-private fun LoginActivity.setupFacebookLogin(){
-
-    FacebookSdk.sdkInitialize(applicationContext)
-    callbackManager = CallbackManager.Factory.create()
-    val loginButton: LoginButton = findViewById(R.id.facebook_login)
-    val fbLoginBtn = findViewById<CardView>(R.id.fb_btn)
-    fbLoginBtn.setOnClickListener {
-        loginButton.performClick()
+    //MARK: Get current date in string
+    private fun getCurrentDate(): String {
+        val calendar: Calendar = Calendar.getInstance()
+        val dateFormat = SimpleDateFormat("MMMM dd, yyyy")
+        return dateFormat.format(calendar.getTime()).toString();
     }
 
-    loginButton.setReadPermissions("email", "public_profile")
-    loginButton.registerCallback(callbackManager, object : FacebookCallback<LoginResult> {
+    //MARK: Push user date to firebase
+    private fun pushUserData(_user: User) {
 
-        override fun onSuccess(loginResult: LoginResult) {
+        mDatabase = FirebaseDatabase.getInstance().reference
+        val childUpdates: HashMap<String, Any> = HashMap()
 
-            val accessToken = AccessToken.getCurrentAccessToken()
-            val request = GraphRequest.newMeRequest(accessToken) { `object`, response ->
+        childUpdates.put(KeyID.Username.toString(), _user.name)
+        childUpdates.put(KeyID.Email.toString(), _user.email)
+        childUpdates.put(KeyID.Active.toString(), _user.active)
+        childUpdates.put(KeyID.Language.toString(), _user.language)
+        childUpdates.put(KeyID.ProfileImageUrl.toString(), _user.profileImageUrl)
+        _user.uid?.let { childUpdates.put(KeyID.Uid.toString(), it) }
 
-                try {
+        mDatabase.child(FirebaseTree.Users.toString()).child(_user.uid).updateChildren(childUpdates)
 
-                    if (`object`.has("name")) {
-                        currentUser.name = `object`.getString("name")
+    }
+
+    // Intent to MainActivity
+    private fun getMainActivity(_user: FirebaseUser?){
+        val intent = Intent(applicationContext, MainActivity::class.java)
+        startActivity(intent)
+        finish()
+    }
+
+    //MARK: Login to firebase after successfully login via facebook or google
+    private fun firebaseLogin(credential: AuthCredential) {
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener{ task ->
+                    if (task.isSuccessful) {
+                        if (mAuth.currentUser?.uid != null) {
+                            currentUser.uid = mAuth.currentUser?.uid!!
+                            Log.d("uid", currentUser.uid)
+                            pushUserData(currentUser)
+                            getMainActivity(mAuth.currentUser)
+                        }
+                    }else{
+                        getMainActivity(null)
                     }
-
-                    if (`object`.has("email")) {
-                        currentUser.email = `object`.getString("email")
-                    }
-
-                    if (`object`.has("picture")) {
-                        currentUser.profileImageUrl = `object`.getJSONObject("picture").getJSONObject("data").getString("url")
-                    }
-
-                    currentUser.active = getCurrentDate()
-                    currentUser.language = "Should be in SharedPreference"
-
-                    val credential = FacebookAuthProvider.getCredential(loginResult.accessToken.token)
-                    firebaseLogin(credential)
-
-                } catch (e: Exception) {
-                    e.printStackTrace()
                 }
-            }
-            val parameters = Bundle()
-            parameters.putString("fields", "id,name,link,email,picture,gender, birthday")
-            request.parameters = parameters
-            request.executeAsync()
-
-//            val credential = FacebookAuthProvider.getCredential(loginResult.accessToken.token)
-//            firebaseLogin(credential)
-        }
-
-        private fun getCurrentDate(): String {
-            val calendar: Calendar = Calendar.getInstance()
-            val dateFormat = SimpleDateFormat("MMMM dd, yyyy")
-
-            return dateFormat.format(calendar.getTime()).toString();
-        }
-
-        override fun onCancel() {
-
-        }
-
-        override fun onError(exception: FacebookException) {
-
-        }
-    })
-
-
-}
-
-
-// Setup Google login
-private fun LoginActivity.setupGoogleLogin(){
-
-    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .build()
-
-    val mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
-//    val signInButton = findViewById<SignInButton>(R.id.sign_in_button)
-//    signInButton.setSize(SignInButton.SIZE_STANDARD)
-    val signInButton = findViewById<CardView>(R.id.sign_in_button)
-
-    signInButton.setOnClickListener {
-        val signInIntent = mGoogleSignInClient.signInIntent
-        startActivityForResult(signInIntent, SIGN_IN_ID)
     }
-}
 
-
-// Setup Firebase login
-private fun LoginActivity.setupFirebaseLogin(){
-    mAuth = FirebaseAuth.getInstance()
-    val currentUser = mAuth.currentUser
-    if (currentUser != null) {
-        getMainActivity(currentUser)
-    }
-}
-
-// Intent to MainActivity
-private fun LoginActivity.getMainActivity(_user: FirebaseUser?){
-    val intent = Intent(applicationContext, MainActivity::class.java)
-    startActivity(intent)
-    finish()
-}
-
-private fun LoginActivity.firebaseLogin(credential: AuthCredential) {
-    mAuth.signInWithCredential(credential)
-            .addOnCompleteListener{ task ->
-                if (task.isSuccessful) {
-                    if (mAuth.currentUser?.uid != null) {
-                        currentUser.uid = mAuth.currentUser?.uid!!
-                        Log.d("uid", currentUser.uid)
-                        pushUserData(currentUser)
-                        getMainActivity(mAuth.currentUser)
-                    }
-                }else{
-                    getMainActivity(null)
-                }
-            }
 }
 
 

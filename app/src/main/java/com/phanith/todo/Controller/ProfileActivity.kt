@@ -30,6 +30,7 @@ import java.util.*
 
 val USER_PROFILE: String = "USER_PROFILE"
 val USER_PROFILE_IMAGE_URL: String = "URL"
+val USER_LOGIN_TYPE: String = "USER_LOGIN_TYPE"
 
 class ProfileActivity : AppCompatActivity() {
 
@@ -50,13 +51,20 @@ class ProfileActivity : AppCompatActivity() {
 
 
         instanceCurrentUser()
-        findViewById<Button>(R.id.signOut).setOnClickListener {
-            logout()
-        }
+        setupSignOutButton()
         setupRadioButton()
         trackUserDataChanges()
     }
 
+    //MARK: Setup sign out button
+    private fun setupSignOutButton(){
+        findViewById<Button>(R.id.signOut).setOnClickListener {
+            logout()
+        }
+    }
+
+
+    //MARK: Set user profile image url to SharePre....
     private fun setProfileImageUrlString(value: String) {
         val preference = getSharedPreferences(USER_PROFILE, Context.MODE_PRIVATE)
         val editor = preference.edit()
@@ -68,6 +76,7 @@ class ProfileActivity : AppCompatActivity() {
         currentUser = User()
     }
 
+    //MARK: Set user profile info
     private fun instanceProfile() {
         username = findViewById(R.id.name)
         username.text = currentUser.name
@@ -82,6 +91,7 @@ class ProfileActivity : AppCompatActivity() {
         email.text = currentUser.email
     }
 
+    //MARK: Observer user data changes only once
     private fun trackUserDataChanges() {
 
         mDatabase = FirebaseDatabase.getInstance().reference.child(FirebaseTree.Users.toString()).child(FirebaseAuth.getInstance().uid)
@@ -107,12 +117,15 @@ class ProfileActivity : AppCompatActivity() {
         mDatabase.addListenerForSingleValueEvent(listener)
     }
 
+    //MARK: Remove observer from firebase
     override fun onDestroy() {
         super.onDestroy()
         mDatabase.removeEventListener(listener)
     }
 
+    //MARK: Sign out
     private fun logout() {
+
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build()
@@ -127,39 +140,34 @@ class ProfileActivity : AppCompatActivity() {
                 })
     }
 
+    //MARK: Flag if english is checked
     private fun englishChecked(value: Boolean) {
         Toast.makeText(this, if (value) "English checked" else "English unchecked", Toast.LENGTH_SHORT).show()
     }
 
+    //MARK: Flag if khmer is checked
     private fun khmerChecked(value: Boolean) {
         Toast.makeText(this, if (value) "Khmer checked" else "Khmer unchecked", Toast.LENGTH_SHORT).show()
     }
 
 
+    //MARK: Setup radio button (English & Khmer)
     private fun setupRadioButton() {
         english = findViewById(R.id.english)
         khmer = findViewById(R.id.khmer)
-
         khmer.isChecked = !english.isChecked
 
         english.setOnCheckedChangeListener { _, isChecked ->
             englishChecked(isChecked)
             val locale = Locale("en_US")
             Locale.setDefault(locale)
-//            val config = Configuration()
-//            config.locale = locale
-//
             this.resources.configuration.setLocale(locale)
-
         }
 
         khmer.setOnCheckedChangeListener { _, isChecked ->
             khmerChecked(isChecked)
             val locale = Locale("km_rKH")
             Locale.setDefault(locale)
-//            val config = Configuration()
-//            config.locale = locale
-//            this.getResources().updateConfiguration(config, this.getResources().getDisplayMetrics());
             this.resources.configuration.setLocale(locale)
 
         }
